@@ -51,6 +51,114 @@ computed vectors cannot.
 | foreign-script corruption | 1/21 | **0/21** |
 | citations verified | 100% | 100% |
 
+## How this was built
+
+The interesting part wasn't the RAG plumbing — it was finding out which
+assumptions were wrong, and in what order.
+
+### 1. The corpus barely exists
+
+The plan was Ramayana, Mahabharata and Gita. An audit of te.wikisource.org killed
+two thirds of it: **10,842 Ramayana slokas, of which 64 have a Telugu tatparyam —
+0.6%.** The rest is Sanskrit mechanically transliterated into Telugu script, which
+*looks* like Telugu to a character counter and isn't. The Mahabharata is the same,
+and it's Vyasa's Sanskrit rather than Nannaya's Telugu Andhra Mahabharatam.
+
+Only the Gita had genuine Sanskrit + Telugu alignment. Scope collapsed to 699
+verses on day one. Parsing them needed three different formats — full sloka with
+`|| c-v ||` refs, incipit-only, and a numbered variant — because the source isn't
+uniform. 16 of 18 chapters then matched canonical verse counts exactly, and the two
+that didn't were a duplicated verse and a missing one, not parser bugs.
+
+### 2. The problem wasn't the language, it was the question shape
+
+First baseline: **recall@10 = 0.57** on hand-written questions. The obvious story
+was "multilingual embedders are weak on Telugu."
+
+That story was wrong, and testing it was the highest-value hour of the project. A
+*floor test* — query with a verbatim 45-character slice of a verse and require the
+encoder to rank it first — scored **26/30 at rank 1, zero misses in the top 20**.
+A topic-matched anisotropy check put Telugu at 0.485 against English 0.502. The
+encoder reads Telugu fine.
+
+The real failure was **query-document asymmetry**: questions are interrogative,
+verses are 126-character declaratives where the answer is one clause among several.
+That's the hardest case for a bi-encoder in *any* language — and it's fixable by
+fine-tuning, which "the model can't read Telugu" would not have been.
+
+### 3. Training data from the corpus itself
+
+No labelled data exists, so Claude generated it: 5 queries per verse — 2 factual,
+2 first-person life situations, 1 romanized Tenglish — over 581 training verses.
+**2,905 pairs for $4.71.**
+
+Two rules mattered more than volume. The generator was **forbidden from reusing the
+verse's vocabulary**, because a query echoing the commentary teaches lexical overlap
+that BM25 already handles; the dense side needs paraphrase. And the split held out
+**verses, not queries** — held-out queries drawn from training verses measure
+memorisation and produce a large, satisfying, meaningless improvement.
+
+Hard negatives came from the live retriever: for each query, the verses it ranked
+highly and got wrong. Random negatives teach nothing — a battle-conch verse is
+trivially separable from a karma query.
+
+### 4. Fine-tuning, measured
+
+Contrastive training on a free Colab T4. **recall@10 0.350 → 0.512.** The mechanism
+is visible in the margin between a query and its correct verse versus a hard
+negative: **+0.000 → +0.345**, achieved almost entirely by pushing negatives down
+(0.500 → 0.177) rather than pulling positives up (0.500 → 0.522).
+
+Romanized Telugu gained most of all, later reaching 0.359 → 0.641 with the
+cross-encoder — because cross-attention sees `kopam` and `కోపం` in one forward pass
+and aligns them, which a bi-encoder comparing two independent vectors cannot.
+
+### 5. The stock reranker made things worse
+
+Adding `bge-reranker-v2-m3` off the shelf *degraded* quality: it improved `lookup`,
+the query type closest to generic retrieval, and damaged the two types fine-tuning
+had specifically taught. **A reranker only helps if it is better at the task than
+the retriever it reorders** — and by then the bi-encoder was the more adapted model.
+
+Fine-tuning the cross-encoder on the same triplets fixed it: **0.512 → 0.634**.
+
+Pool size was then measured rather than guessed, by reranking the top 50 once and
+reading off smaller pools by truncation — five data points for the cost of one.
+recall@10 saturates at pool=30; the extra 20 candidates buy +0.005 NDCG for 40%
+more compute.
+
+### 6. What didn't work
+
+Three substantial efforts produced nothing, and each took a measurement to
+establish rather than an argument:
+
+- **Query expansion** dropped recall@1 from 0.300 to 0.160 at 3.4× the latency —
+  because results from separate reranker runs were merged by *score*, and
+  cross-query scores aren't comparable.
+- **The thematic enrichment layer** lifted thematic recall@50 but not recall@10,
+  and vanished entirely once the reranker ran.
+- **Selective enrichment** removed 55% of held-out thematic gold verses. The skip
+  rules excluded "metaphysical description" — not realising that *who is God* and
+  *what am I* are thematic questions whose answers are exactly those verses.
+
+### 7. Generation: enforce, don't ask
+
+The generation half took 45 seconds and answered well. Getting it to ~10s with a
+3-second first word meant removing a thinking budget that bought nothing, folding
+the sufficiency check into generation, running routing and retrieval in parallel,
+and streaming.
+
+Then the citation rate silently dropped to zero — twice — because the parser
+rejected valid citations over bracket punctuation and a missing `gita-` prefix. The
+model's format compliance had been perfect throughout. Both bugs were found by a
+`cited N` counter added while chasing a different hypothesis, and both looked
+exactly like a model that had chosen not to cite.
+
+The last lesson generalises: **tightening the generation prompt against four
+observed drift modes, with concrete Telugu examples, changed nothing (76% → 76%).
+Switching Haiku → Sonnet did (76% → 33%).** Verbatim citation verification works at
+100% because it *enforces*; the prompt that asked for verbatim quotes never did.
+
 ## Architecture
 
 ```

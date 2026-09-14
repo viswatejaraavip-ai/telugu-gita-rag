@@ -1,0 +1,23 @@
+# models are 4.3 GB — published to the HF Hub instead
+models/
+*.safetensors
+*.bin
+
+# regenerable
+index/
+cache/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# secrets
+.env
+*.key
+
+# scratch
+*.bak
+*.log
+eval/runs*.jsonl
+eval/*judgments*.jsonl

@@ -1,0 +1,11 @@
+# NOTE: do NOT pin gradio here - the Space builder injects
+# `gradio[oauth]==<sdk_version>` from README.md front-matter, and any range here
+# conflicts with it (ResolutionImpossible). Change sdk_version instead.
+huggingface_hub>=0.23.2,<1.0
+spaces
+sentence-transformers>=3.0,<4
+torch
+rank_bm25
+anthropic
+pydantic>=2
+numpy<2

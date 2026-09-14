@@ -1,0 +1,14 @@
+{"question_te":"కర్మ ఫలం గురించి కృష్ణుడు ఏమి చెప్పాడు?","gold_ids":["gita-2-47","gita-2-48"],"kind":"lookup","author":"seed"}
+{"question_te":"ఆత్మ శరీరం మార్చడం గురించి గీత ఏమి చెబుతుంది?","gold_ids":["gita-2-13","gita-2-22"],"kind":"lookup","author":"seed"}
+{"question_te":"ధర్మం క్షీణించినప్పుడు భగవంతుడు ఏమి చేస్తాడు?","gold_ids":["gita-4-7"],"kind":"lookup","author":"seed"}
+{"question_te":"ఆత్మ చనిపోతుందా? ఆత్మకు పుట్టుక ఉందా?","gold_ids":["gita-2-20"],"kind":"lookup","author":"seed"}
+{"question_te":"శరణాగతి గురించి గీత చివరి సందేశం ఏమిటి?","gold_ids":["gita-18-66","gita-18-62"],"kind":"lookup","author":"seed"}
+{"question_te":"పరధర్మం కంటే స్వధర్మం మేలా?","gold_ids":["gita-3-35","gita-18-47"],"kind":"lookup","author":"seed"}
+{"question_te":"తనను తాను ఎలా ఉద్ధరించుకోవాలి?","gold_ids":["gita-6-5"],"kind":"lookup","author":"seed"}
+{"question_te":"కోపం ఎలా పుడుతుంది?","gold_ids":["gita-2-62","gita-2-63"],"kind":"lookup","author":"seed"}
+{"question_te":"యోగక్షేమం ఎవరు వహిస్తారు?","gold_ids":["gita-9-22"],"kind":"lookup","author":"seed"}
+{"question_te":"ఫలితం ఆశించకుండా పని చేయడం ఎలా?","gold_ids":["gita-2-47","gita-2-48"],"kind":"thematic","author":"seed"}
+{"question_te":"నాకు చాలా కోపం వస్తుంది, దాన్ని ఎలా అర్థం చేసుకోవాలి?","gold_ids":["gita-2-62","gita-2-63"],"kind":"thematic","author":"seed"}
+{"question_te":"నా ఉద్యోగం నాకు సరిపోదు, వేరే పని చేయాలా?","gold_ids":["gita-3-35","gita-18-47"],"kind":"thematic","author":"seed"}
+{"question_te":"karma phalam gurinchi krishnudu emi cheppadu","gold_ids":["gita-2-47","gita-2-48"],"kind":"tenglish","author":"seed"}
+{"question_te":"kopam ela puttundi gita lo","gold_ids":["gita-2-62","gita-2-63"],"kind":"tenglish","author":"seed"}

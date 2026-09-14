@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telugu-gita-rag"
+version = "0.1.0"
+description = "Grounded Telugu question answering over the Bhagavad Gita, with verbatim citation verification"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "sentence-transformers>=3.0,<4",
+  "torch",
+  "rank_bm25",
+  "qdrant-client>=1.9,<2",
+  "anthropic",
+  "langgraph",
+  "langchain-core",
+  "pydantic>=2",
+  "numpy<2",
+]
+
+[project.optional-dependencies]
+app = ["gradio>=5.9,<6", "spaces"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+gita-build-corpus = "telugu_gita_rag.corpus.parse_gita:main"
+gita-build-index  = "telugu_gita_rag.retrieval.build_index:main"
+gita-eval         = "telugu_gita_rag.evaluation.retrieval_eval:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

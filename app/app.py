@@ -311,7 +311,36 @@ EXAMPLES = ["కర్మ ఫలం గురించి కృష్ణుడ�
             "kopam ela puttundi gita lo",
             "ఆత్మ చనిపోతుందా?"]
 
+# ------------------------------------------------------------ search API
+PASSAGE_FIELDS = ("id", "citation_te", "citation_en", "adhyaya", "adhyaya_no", "sloka_no",
+                  "sloka_sa", "tatparyam_te", "source_url", "verse_number_verified")
+
+def search_api(question: str, top_k: float = 6):
+    """Passages only, no generation: for callers that write their own answer
+    and verify their own citations (the Prashna app). Same retrieval as
+    `answer` — fine-tuned bi-encoder + BM25 + RRF + cross-encoder — and the
+    returned text is the corpus text, so whatever is shown downstream can be
+    anchored to it verbatim. The query must already be in Telugu script:
+    transliteration is the caller's job (it is a model call, and this
+    endpoint makes none)."""
+    import time
+    t0 = time.time(); q = norm(question)
+    if not q:
+        return {"passages": [], "query_te": "", "elapsed_s": 0.0}
+    k = max(1, min(int(top_k or 6), 12))
+    hits = search(q, top_k=k)
+    return {"passages": [{f: r.get(f) for f in PASSAGE_FIELDS} for r in hits],
+            "query_te": q, "elapsed_s": round(time.time() - t0, 2), "corpus_verses": len(CORPUS)}
+
+
 with gr.Blocks(title="భగవద్గీత — ప్రశ్నోత్తరాలు") as demo:
+    # Hidden components carry the API-only endpoint: POST /gradio_api/call/search
+    # {"data": ["<telugu question>", 6]} -> {"passages": [...]}.
+    with gr.Row(visible=False):
+        s_q = gr.Textbox(label="search_query"); s_k = gr.Number(value=6, label="top_k")
+        s_out = gr.JSON(label="passages"); s_btn = gr.Button("search")
+    s_btn.click(search_api, inputs=[s_q, s_k], outputs=s_out, api_name="search")
+
     gr.Markdown("# భగవద్గీత — ప్రశ్నోత్తరాలు\n"
                 "భగవద్గీత (699 శ్లోకాలు) నుండి మాత్రమే సమాధానాలు. "
                 "ప్రతి ఉల్లేఖనం మూల శ్లోకంతో సరిపోల్చి ధృవీకరించబడుతుంది.\n\n"
